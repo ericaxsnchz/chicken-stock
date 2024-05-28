@@ -2,53 +2,64 @@ import pandas as pd
 import yfinance as yf
 
 class Account:
-    def __init__(self, initial_balance=100000):
-        self.initial_balance = initial_balance
+    def __init__(self, initial_balance=10000):
         self.balance = initial_balance
         self.portfolio = {}
-        self.transaction_history = pd.DataFrame(columns=['Date', 'Type', 'Symbol', 'Quantity', 'Price', 'Total'])
+        self.transaction_history = pd.DataFrame(columns=['symbol', 'quantity', 'price', 'total', 'type'])
 
-    def reset_account(self):
-        self.balance = self.initial_balance
-        self.portfolio = {}
-        self.transaction_history = pd.DataFrame(columns=['Date', 'Type', 'Symbol', 'Quantity', 'Price', 'Total'])
+    def get_stock_price(self, symbol):
+        import yfinance as yf
+        ticker = yf.Ticker(symbol)
+        data = ticker.history(period='1d')
+        if not data.empty:
+            return data['Close'].iloc[-1]
+        else:
+            print(f"Error retrieving data for {symbol}")
+            return None
 
     def buy_stock(self, symbol, quantity, price):
-        cost = quantity * price
-        if cost <= self.balance:
-            self.balance -= cost
+        total_cost = price * quantity
+        if self.balance >= total_cost:
+            self.balance -= total_cost
             if symbol in self.portfolio:
                 self.portfolio[symbol] += quantity
             else:
                 self.portfolio[symbol] = quantity
-            self.transaction_history = self.transaction_history.append({
-                'Date': pd.Timestamp.now(),
-                'Type': 'BUY',
-                'Symbol': symbol,
-                'Quantity': quantity,
-                'Price': price,
-                'Total': cost
-            }, ignore_index=True)
+
+            new_transaction = pd.DataFrame([{
+                'symbol': symbol,
+                'quantity': quantity,
+                'price': price,
+                'total': total_cost,
+                'type': 'buy'
+            }])
+
+            self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
             return True
-        return False
+        else:
+            return False
 
     def sell_stock(self, symbol, quantity, price):
         if symbol in self.portfolio and self.portfolio[symbol] >= quantity:
-            revenue = quantity * price
-            self.balance += revenue
+            total_revenue = price * quantity
+            self.balance += total_revenue
             self.portfolio[symbol] -= quantity
+
             if self.portfolio[symbol] == 0:
                 del self.portfolio[symbol]
-            self.transaction_history = self.transaction_history.append({
-                'Date': pd.Timestamp.now(),
-                'Type': 'SELL',
-                'Symbol': symbol,
-                'Quantity': quantity,
-                'Price': price,
-                'Total': revenue
-            }, ignore_index=True)
+
+            new_transaction = pd.DataFrame([{
+                'symbol': symbol,
+                'quantity': quantity,
+                'price': price,
+                'total': total_revenue,
+                'type': 'sell'
+            }])
+
+            self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
             return True
-        return False
+        else:
+            return False
 
     def get_portfolio_value(self):
         return self.balance + sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])

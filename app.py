@@ -38,8 +38,18 @@ def load_data():
 @app.route('/buy', methods=['POST'])
 def buy():
     data = request.get_json()
-    symbol = data['symbol']
-    quantity = int(data['quantity'])
+    print("Received buy request data:", data)  # Debugging line
+    symbol = data.get('symbol')
+    quantity = data.get('quantity')
+
+    if not symbol or not quantity:
+        return jsonify(success=False, message="Symbol and quantity are required"), 400
+
+    try:
+        quantity = int(quantity)
+    except ValueError:
+        return jsonify(success=False, message="Quantity must be an integer"), 400
+
     price = account.get_stock_price(symbol)
     if price is not None:
         if account.buy_stock(symbol, quantity, price):
@@ -48,6 +58,7 @@ def buy():
             return jsonify(success=False, message="Insufficient funds"), 400
     else:
         return jsonify(success=False, message="Error retrieving stock price"), 400
+
 
 @app.route('/sell', methods=['POST'])
 def sell():

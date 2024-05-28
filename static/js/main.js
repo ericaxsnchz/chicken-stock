@@ -53,24 +53,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('buy-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const symbol = event.target.symbol.value;
-    const quantity = event.target.quantity.value;
-    console.log("Sending buy request:", { symbol, quantity });  // Debugging line
-
-    const response = await fetch('/buy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, quantity }),
+        event.preventDefault();
+        const symbol = event.target.symbol.value;
+        const quantity = event.target.quantity.value;
+        console.log("Sending buy request:", { symbol, quantity });  // Debugging line
+    
+        const response = await fetch('/buy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ symbol, quantity }),
+        });
+    
+        const data = await response.json();
+        if (data.success) {
+            fetchPortfolio();
+        } else {
+            alert(data.message);
+        }
     });
-
-    const data = await response.json();
-    if (data.success) {
-        fetchPortfolio();
-    } else {
-        alert(data.message);
-    }
-});
+    
 
     document.getElementById('sell-form').addEventListener('submit', async (event) => {
         event.preventDefault();
