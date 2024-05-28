@@ -1,0 +1,67 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Paper Trading App</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialData = JSON.parse('{{ initial_data|safe }}');
+            const initialSymbol = '{{ initial_symbol }}';
+
+            const dates = initialData.index;
+            const closes = initialData.data.map(row => row[3]);  // Assuming 'Close' is the 4th column
+
+            const trace = {
+                x: dates,
+                y: closes,
+                type: 'scatter'
+            };
+            const layout = {
+                title: `${initialSymbol} Historical Prices`
+            };
+            Plotly.newPlot('chart', [trace], layout);
+
+            // JavaScript code to handle form submissions and updates
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body>
+    <h1>Paper Trading App</h1>
+    <div>
+        <h2>Balance: $<span id="balance">{{ balance }}</span></h2>
+        <h3>Portfolio</h3>
+        <ul id="portfolio">
+            {% for symbol, quantity in portfolio.items() %}
+                <li>{{ symbol }}: {{ quantity }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div>
+        <h3>Load Stock Data</h3>
+        <form id="load-data-form">
+            <input type="text" name="symbol" placeholder="Stock Symbol" required>
+            <button type="submit">Load</button>
+        </form>
+        <div id="chart"></div>
+    </div>
+    <div>
+        <h3>Buy Stock</h3>
+        <form id="buy-form">
+            <input type="text" name="symbol" placeholder="Stock Symbol" required>
+            <input type="number" name="quantity" placeholder="Quantity" required>
+            <button type="submit">Buy</button>
+        </form>
+    </div>
+    <div>
+        <h3>Sell Stock</h3>
+        <form id="sell-form">
+            <input type="text" name="symbol" placeholder="Stock Symbol" required>
+            <input type="number" name="quantity" placeholder="Quantity" required>
+            <button type="submit">Sell</button>
+        </form>
+    </div>
+</body>
+</html>
