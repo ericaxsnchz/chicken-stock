@@ -74,12 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             document.getElementById('balance').textContent = parseFloat(data.balance).toFixed(2);
 
-            const portfolioList = document.getElementById('portfolio');
-            portfolioList.innerHTML = ''; 
-            for (const [symbol, quantity] of Object.entries(data.portfolio)) {
-                const listItem = document.createElement('li');
-                listItem.textContent = `${symbol}: ${quantity}`;
-                portfolioList.appendChild(listItem);
+            const portfolioTable = document.getElementById('portfolio');
+            const existingRow = portfolioTable.querySelector(`tr[data-symbol="${symbol}"]`);
+            if (existingRow) {
+                const updatedQuantity = parseInt(existingRow.querySelector('td:last-child').textContent) - quantity;
+                if (updatedQuantity > 0) {
+                    existingRow.querySelector('td:last-child').textContent = updatedQuantity;
+                } else {
+                    existingRow.remove();
+                }
             }
         });
     });
