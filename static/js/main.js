@@ -44,12 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             document.getElementById('balance').textContent = parseFloat(data.balance).toFixed(2);
 
-            const portfolioList = document.getElementById('portfolio');
-            portfolioList.innerHTML = '';
-            for (const [symbol, quantity] of Object.entries(data.portfolio)) {
-                const listItem = document.createElement('li');
-                listItem.textContent = `${symbol}: ${quantity}`;
-                portfolioList.appendChild(listItem);
+            const portfolioTable = document.getElementById('portfolio');
+            const existingRow = portfolioTable.querySelector(`tr[data-symbol="${symbol}"]`);
+            if (existingRow) {
+                existingRow.querySelector('td:last-child').textContent = data.portfolio[symbol];
+            } else {
+                const newRow = document.createElement('tr');
+                newRow.setAttribute('data-symbol', symbol);
+                newRow.innerHTML = `<td>${symbol}</td><td>${data.portfolio[symbol]}</td>`;
+                portfolioTable.querySelector('tbody').appendChild(newRow);
             }
         });
     });
@@ -78,6 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 listItem.textContent = `${symbol}: ${quantity}`;
                 portfolioList.appendChild(listItem);
             }
+        });
+    });
+
+    const stockButtons = document.querySelectorAll('.stock-btn');
+    stockButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const symbol = button.dataset.symbol;
+            document.getElementById('buy-symbol').value = symbol;
+            document.getElementById('sell-symbol').value = symbol;
         });
     });
 });

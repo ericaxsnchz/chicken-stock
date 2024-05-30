@@ -47,22 +47,36 @@
             </div>
             <div id="chart"></div>
         </div>
+
         <div class="user-tools">
             <h3>Portfolio</h3>
             <div>
                 <h4>Balance: $<span id="balance">{{ balance }}</span></h4>
             </div>
-            <ul id="portfolio">
-                {% for symbol, quantity in portfolio.items() %}
-                    <li>{{ symbol }}: {{ quantity }}</li>
-                {% endfor %}
-            </ul>
+            <table id="portfolio">
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for symbol, quantity in portfolio.items() %}
+                        <tr data-symbol="{{ symbol }}">
+                            <td>{{ symbol }}</td>
+                            <td>{{ quantity }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
             <h3>Buy Stock</h3>
             <form id="buy-form">
                 <input type="text" name="symbol" placeholder="Stock Symbol" required>
                 <input type="number" name="quantity" placeholder="Quantity" required>
                 <button type="submit">Buy</button>
             </form>
+            
             <h3>Sell Stock</h3>
             <form id="sell-form">
                 <input type="text" name="symbol" placeholder="Stock Symbol" required>
@@ -70,6 +84,7 @@
                 <button type="submit">Sell</button>
             </form>
         </div>
+
     </div>
 </body>
 </html>
