@@ -21,6 +21,10 @@
                 title: `${initialSymbol} Historical Prices`
             };
             Plotly.newPlot('chart', [trace], layout);
+
+            const balanceElement = document.getElementById('balance');
+            const rawBalance = parseFloat(balanceElement.textContent);
+            balanceElement.textContent = rawBalance.toFixed(2);
         });
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
@@ -45,6 +49,9 @@
         </div>
         <div class="user-tools">
             <h3>Portfolio</h3>
+            <div>
+                <h4>Balance: $<span id="balance">{{ balance }}</span></h4>
+            </div>
             <ul id="portfolio">
                 {% for symbol, quantity in portfolio.items() %}
                     <li>{{ symbol }}: {{ quantity }}</li>

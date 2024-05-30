@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, jsonify, request
 import yfinance as yf
 import pandas as pd
@@ -38,7 +37,7 @@ def load_data():
 @app.route('/buy', methods=['POST'])
 def buy():
     data = request.get_json()
-    print("Received buy request data:", data)  # Debugging line
+    print("Received buy request data:", data)
     symbol = data.get('symbol')
     quantity = data.get('quantity')
 

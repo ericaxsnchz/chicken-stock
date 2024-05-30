@@ -2,10 +2,10 @@ import pandas as pd
 import yfinance as yf
 
 class Account:
-    def __init__(self, initial_balance=10000):
-        self.balance = initial_balance
+    def __init__(self):
+        self.balance = 10000
         self.portfolio = {}
-        self.transaction_history = pd.DataFrame(columns=['symbol', 'quantity', 'price', 'total', 'type'])
+        self.transaction_history = pd.DataFrame(columns=['Symbol', 'Action', 'Quantity', 'Price', 'Total'])
 
     def get_stock_price(self, symbol):
         import yfinance as yf
@@ -18,23 +18,18 @@ class Account:
             return None
 
     def buy_stock(self, symbol, quantity, price):
-        total_cost = price * quantity
-        if self.balance >= total_cost:
+        if self.balance >= quantity * price:
+            total_cost = quantity * price
             self.balance -= total_cost
             if symbol in self.portfolio:
                 self.portfolio[symbol] += quantity
             else:
                 self.portfolio[symbol] = quantity
-
-            new_transaction = pd.DataFrame([{
-                'symbol': symbol,
-                'quantity': quantity,
-                'price': price,
-                'total': total_cost,
-                'type': 'buy'
-            }])
-
-            self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
+            new_transaction = pd.DataFrame({'Symbol': [symbol], 'Action': ['Buy'], 'Quantity': [quantity], 'Price': [price], 'Total': [total_cost]})
+            if self.transaction_history.empty:
+                self.transaction_history = new_transaction
+            else:
+                self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
             return True
         else:
             return False
