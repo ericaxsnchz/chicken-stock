@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/portfolio_value')
             .then(response => response.json())
             .then(data => {
-                const dates = data.index;
+                const dates = data.index.map(date => new Date(date));
                 const values = data.data.map(row => row[1]);
     
                 const trace = {

@@ -1,6 +1,6 @@
 import pandas as pd
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Account:
     def __init__(self, initial_balance=10000):
@@ -24,7 +24,7 @@ class Account:
                 self.portfolio[symbol] = quantity
 
             new_transaction = pd.DataFrame([{
-                'Date': datetime.now(),
+                'Date': datetime.now(timezone.utc),
                 'Symbol': symbol,
                 'Quantity': quantity,
                 'Price': price,
@@ -34,7 +34,7 @@ class Account:
                 self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
             else:
                 self.transaction_history = new_transaction
-            self.update_daily_portfolio_value()
+            self.update_daily_portfolio_value(datetime.now().date())
             return True
         else:
             return False
@@ -48,7 +48,7 @@ class Account:
                 del self.portfolio[symbol]
 
             new_transaction = pd.DataFrame([{
-                'Date': datetime.now(),
+                'Date': datetime.now(timezone.utc),
                 'Symbol': symbol,
                 'Quantity': -quantity,
                 'Price': price,
@@ -58,25 +58,26 @@ class Account:
                 self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
             else:
                 self.transaction_history = new_transaction
-            self.update_daily_portfolio_value()
+            self.update_daily_portfolio_value(datetime.now().date())  # Pass current date here
             return True
         else:
             return False
 
-    def update_daily_portfolio_value(self):
-        date = datetime.now().date()
+    def update_daily_portfolio_value(self, date):
         total_value = self.balance + sum(self.get_stock_price(symbol) * quantity for symbol, quantity in self.portfolio.items())
+        print("Total Value:", total_value)
         new_value = pd.DataFrame({'Date': [date], 'Value': [total_value]})
+        print("New Value DataFrame:", new_value)
         if self.daily_portfolio_value.empty:
             self.daily_portfolio_value = new_value
         else:
-            self.daily_portfolio_value = pd.concat([self.daily_portfolio_value, new_value], ignore_index=True, sort=False)
-
-
-
+            self.daily_portfolio_value = pd.concat([self.daily_portfolio_value, new_value], ignore_index=True)
 
     def get_daily_portfolio_value(self):
-        return self.daily_portfolio_value.sort_values(by='Date')
+        data = self.daily_portfolio_value
+        data['Date'] = pd.to_datetime(data['Date'])
+        data = data.set_index('Date') 
+        return data
 
     def get_portfolio_value(self):
         return self.balance + sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])
