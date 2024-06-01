@@ -1,9 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('load-data-form').addEventListener('submit', (event) => {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const symbol = formData.get('symbol');
-
+    function loadData(symbol) {
         fetch('/load_data', {
             method: 'POST',
             headers: {
@@ -25,14 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             Plotly.newPlot('chart', [trace], layout);
         });
-    });
+    }
 
-    document.getElementById('buy-form').addEventListener('submit', (event) => {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const symbol = formData.get('symbol');
-        const quantity = parseInt(formData.get('quantity'));
-
+    function handleBuy(symbol, quantity) {
         fetch('/buy', {
             method: 'POST',
             headers: {
@@ -54,15 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 newRow.innerHTML = `<td>${symbol}</td><td>${data.portfolio[symbol]}</td>`;
                 portfolioTable.querySelector('tbody').appendChild(newRow);
             }
+
+            updatePortfolioChart();
         });
-    });
+    }
 
-    document.getElementById('sell-form').addEventListener('submit', (event) => {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const symbol = formData.get('symbol');
-        const quantity = parseInt(formData.get('quantity'));
-
+    function handleSell(symbol, quantity) {
         fetch('/sell', {
             method: 'POST',
             headers: {
@@ -84,8 +72,67 @@ document.addEventListener('DOMContentLoaded', () => {
                     existingRow.remove();
                 }
             }
+
+            updatePortfolioChart();
         });
+    }
+
+    function updatePortfolioChart() {
+        fetch('/portfolio_value')
+            .then(response => response.json())
+            .then(data => {
+                const dates = data.index;
+                const values = data.data.map(row => row[1]);
+    
+                const trace = {
+                    x: dates,
+                    y: values,
+                    type: 'scatter'
+                };
+                const layout = {
+                    title: 'Daily Portfolio Value',
+                    xaxis: {
+                        title: 'Date',
+                        type: 'date',
+                        tickformat: '%Y-%m-%d'
+                    },
+                    yaxis: {
+                        title: 'Portfolio Value'
+                    }
+                };
+    
+                Plotly.newPlot('portfolio-value-chart', [trace], layout);
+            })
+            .catch(error => {
+                console.error('Error fetching portfolio value data:', error);
+            });
+    }
+
+    document.getElementById('load-data-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const symbol = formData.get('symbol');
+        loadData(symbol);
     });
+
+    document.getElementById('buy-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const symbol = formData.get('symbol');
+        const quantity = parseInt(formData.get('quantity'));
+        handleBuy(symbol, quantity);
+    });
+
+    document.getElementById('sell-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const symbol = formData.get('symbol');
+        const quantity = parseInt(formData.get('quantity'));
+        handleSell(symbol, quantity);
+    });
+
+    updatePortfolioChart();
+        
 
     const stockButtons = document.querySelectorAll('.stock-btn');
     stockButtons.forEach(button => {

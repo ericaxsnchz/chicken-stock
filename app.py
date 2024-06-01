@@ -77,5 +77,10 @@ def sell():
 def portfolio():
     return jsonify(balance=account.balance, portfolio=account.portfolio)
 
+@app.route('/portfolio_value')
+def portfolio_value():
+    data = account.get_daily_portfolio_value()
+    return data.to_json(orient='split')
+
 if __name__ == '__main__':
     app.run(debug=True)

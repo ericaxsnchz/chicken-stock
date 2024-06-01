@@ -39,7 +39,6 @@
     <div class="container">
         <div class="chart-area">
             <div>
-                <h3>Load Stock Data</h3>
                 <form id="load-data-form">
                     <input type="text" name="symbol" placeholder="Stock Symbol" required>
                     <button type="submit">Load</button>
@@ -83,6 +82,11 @@
                 <input type="number" name="quantity" placeholder="Quantity" required>
                 <button type="submit">Sell</button>
             </form>
+        </div>
+
+        <div class="daily-port">
+            <h3>Daily Portfolio Value</h3>
+            <div id="portfolio-value-chart"></div>
         </div>
 
     </div>
