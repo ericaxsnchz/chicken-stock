@@ -62,13 +62,12 @@ class Account:
             return False
 
     def update_daily_portfolio_value(self):
-        total_balance = self.balance
         total_stock_values = sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])
-        
+
         total_transactions = self.transaction_history['Total'].sum()
-        
-        total_value = round(total_balance + total_stock_values + total_transactions, 2)
-        
+
+        total_value = round(self.balance + total_stock_values - total_transactions, 2)
+
         today_date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
         new_value = pd.DataFrame({'Date': [today_date], 'Value': [total_value]})
         
