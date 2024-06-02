@@ -85,7 +85,9 @@ class Account:
     def get_daily_portfolio_value(self):
         data = self.daily_portfolio_value.copy()
         data['Date'] = pd.to_datetime(data['Date'])
-        data = data.set_index('Date') 
+        data = data.set_index('Date')
+        data['Value'] = data['Value'].apply(lambda x: '${:,.2f}'.format(x))
+        
         return {
             'index': data.index.strftime('%Y-%m-%d').tolist(),
             'data': data['Value'].tolist()

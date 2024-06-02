@@ -89,11 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePortfolioChart(portfolioData) {
         const dates = portfolioData.index;
-        const values = portfolioData.data;
+        const values = portfolioData.data.map(value => parseFloat(value.replace(/[^\d.-]/g, '')));
+        const formattedValues = values.map(value => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' }));
     
         const trace = {
             x: dates,
-            y: values,
+            y: formattedValues,
             type: 'scatter',
             mode: 'lines+markers',
             line: { shape: 'linear' },
