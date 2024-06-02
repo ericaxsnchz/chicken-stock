@@ -9,7 +9,7 @@ class Account:
         self.transaction_history = pd.DataFrame(columns=['Date', 'Symbol', 'Quantity', 'Price', 'Total'])
         self.daily_portfolio_value = pd.DataFrame(columns=['Date', 'Value'])
 
-    def get_stock_price(self, symbol):
+    def get_stock_data(self, symbol):
         ticker = yf.Ticker(symbol)
         todays_data = ticker.history(period='1d')
         return todays_data['Close'][0]
@@ -30,11 +30,10 @@ class Account:
                 'Price': price,
                 'Total': total_cost
             }])
-            if not self.transaction_history.empty:
+            
+            if not new_transaction.empty:
                 self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
-            else:
-                self.transaction_history = new_transaction
-            self.update_daily_portfolio_value(datetime.now().date())
+            self.update_daily_portfolio_value()
             return True
         else:
             return False
@@ -54,33 +53,51 @@ class Account:
                 'Price': price,
                 'Total': total_revenue
             }])
-            if not self.transaction_history.empty:
+            
+            if not new_transaction.empty:
                 self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
-            else:
-                self.transaction_history = new_transaction
-            self.update_daily_portfolio_value(datetime.now().date())  # Pass current date here
+            self.update_daily_portfolio_value()
             return True
         else:
             return False
 
-    def update_daily_portfolio_value(self, date):
-        total_value = self.balance + sum(self.get_stock_price(symbol) * quantity for symbol, quantity in self.portfolio.items())
-        print("Total Value:", total_value)
-        new_value = pd.DataFrame({'Date': [date], 'Value': [total_value]})
-        print("New Value DataFrame:", new_value)
+    def update_daily_portfolio_value(self):
+        total_balance = self.balance
+        total_stock_values = sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])
+        
+        total_transactions = self.transaction_history['Total'].sum()
+        
+        total_value = round(total_balance + total_stock_values + total_transactions, 2)
+        
+        today_date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        new_value = pd.DataFrame({'Date': [today_date], 'Value': [total_value]})
+        
+        print("New Daily Portfolio Value:")
+        print(new_value)
+        
         if self.daily_portfolio_value.empty:
             self.daily_portfolio_value = new_value
         else:
             self.daily_portfolio_value = pd.concat([self.daily_portfolio_value, new_value], ignore_index=True)
+        
+        print("Updated Daily Portfolio Values:")
+        print(self.daily_portfolio_value)
 
     def get_daily_portfolio_value(self):
-        data = self.daily_portfolio_value
+        data = self.daily_portfolio_value.copy()
         data['Date'] = pd.to_datetime(data['Date'])
         data = data.set_index('Date') 
-        return data
+        return {
+            'index': data.index.strftime('%Y-%m-%d').tolist(),
+            'data': data['Value'].tolist()
+        }
 
     def get_portfolio_value(self):
-        return self.balance + sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])
+        balance_value = self.balance
+        stock_values = sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])
+        total_value = round(balance_value + stock_values, 2)
+        print(f"Current Portfolio Value: {total_value} (Balance: {self.balance}, Stocks: {stock_values})")
+        return total_value
 
     def get_stock_price(self, symbol):
         ticker = yf.Ticker(symbol)
@@ -92,4 +109,4 @@ class Account:
                 raise ValueError("No data found for the symbol")
         except Exception as e:
             print(f"Error retrieving data for {symbol}: {e}")
-            return None
+            return 0

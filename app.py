@@ -6,7 +6,7 @@ from account import Account
 app = Flask(__name__)
 account = Account()
 
-def get_stock_data(symbol, period='1mo', interval='1d'):
+def get_stock_price(symbol, period='1mo', interval='1d'):
     ticker = yf.Ticker(symbol)
     try:
         df = ticker.history(period=period, interval=interval)
@@ -21,66 +21,62 @@ def get_stock_data(symbol, period='1mo', interval='1d'):
 @app.route('/')
 def home():
     initial_symbol = 'AAPL'
-    initial_data = get_stock_data(initial_symbol)
+    initial_data = get_stock_price(initial_symbol)
     return render_template('index.html', balance=account.balance, portfolio=account.portfolio, initial_data=initial_data.to_json(orient='split'), initial_symbol=initial_symbol)
 
 @app.route('/load_data', methods=['POST'])
 def load_data():
     data = request.get_json()
-    symbol = data['symbol']
-    stock_data = get_stock_data(symbol)
-    if not stock_data.empty:
-        return stock_data.to_json(orient='split')
-    else:
-        return jsonify(success=False, message="No data found for the symbol"), 404
+    symbol = data.get('symbol')
+    
+    if symbol is None:
+        return jsonify({"error": "No symbol provided"}), 400
+
+    stock_data = get_stock_price(symbol)
+    if stock_data.empty:
+        return jsonify({"error": "Unable to fetch data for the symbol"}), 500
+
+    return jsonify({
+        "index": stock_data.index.strftime('%Y-%m-%d').tolist(),
+        "data": stock_data.values.tolist()
+    })
 
 @app.route('/buy', methods=['POST'])
 def buy():
-    data = request.get_json()
-    print("Received buy request data:", data)
-    symbol = data.get('symbol')
-    quantity = data.get('quantity')
-
-    if not symbol or not quantity:
-        return jsonify(success=False, message="Symbol and quantity are required"), 400
-
-    try:
-        quantity = int(quantity)
-    except ValueError:
-        return jsonify(success=False, message="Quantity must be an integer"), 400
-
+    data = request.json
+    symbol = data['symbol']
+    quantity = data['quantity']
     price = account.get_stock_price(symbol)
-    if price is not None:
-        if account.buy_stock(symbol, quantity, price):
-            return jsonify(success=True, balance=account.balance, portfolio=account.portfolio)
-        else:
-            return jsonify(success=False, message="Insufficient funds"), 400
+    success = account.buy_stock(symbol, quantity, price)
+    if success:
+        return jsonify(balance=account.balance, portfolio=account.portfolio)
     else:
-        return jsonify(success=False, message="Error retrieving stock price"), 400
-
+        return jsonify(error="Insufficient funds"), 400
 
 @app.route('/sell', methods=['POST'])
 def sell():
-    data = request.get_json()
+    data = request.json
     symbol = data['symbol']
-    quantity = int(data['quantity'])
+    quantity = data['quantity']
     price = account.get_stock_price(symbol)
-    if price is not None:
-        if account.sell_stock(symbol, quantity, price):
-            return jsonify(success=True, balance=account.balance, portfolio=account.portfolio)
-        else:
-            return jsonify(success=False, message="Insufficient shares"), 400
+    success = account.sell_stock(symbol, quantity, price)
+    if success:
+        return jsonify(balance=account.balance, portfolio=account.portfolio)
     else:
-        return jsonify(success=False, message="Error retrieving stock price"), 400
+        return jsonify(error="Not enough stock"), 400
+
+def update_portfolio_chart():
+    data = account.get_daily_portfolio_value()
+    return jsonify(data)
 
 @app.route('/portfolio')
 def portfolio():
     return jsonify(balance=account.balance, portfolio=account.portfolio)
 
-@app.route('/portfolio_value')
+@app.route('/portfolio_value', methods=['GET'])
 def portfolio_value():
-    data = account.get_daily_portfolio_value()
-    return data.to_json(orient='split')
+    portfolio_data = account.get_daily_portfolio_value()
+    return jsonify(portfolio_data=portfolio_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
