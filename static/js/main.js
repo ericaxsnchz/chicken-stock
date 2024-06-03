@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 tickformat: '%Y-%m-%d'
             },
             yaxis: {
-                title: 'Portfolio Value'
+                title: 'Portfolio Value',
+                tickformat: '$,.2f'
             }
         };
     
