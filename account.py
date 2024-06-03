@@ -33,7 +33,7 @@ class Account:
             
             if not new_transaction.empty:
                 self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
-            self.update_daily_portfolio_value()
+            self.update_daily_portfolio_value() 
             return True
         else:
             return False
@@ -49,7 +49,7 @@ class Account:
             new_transaction = pd.DataFrame([{
                 'Date': datetime.now(timezone.utc),
                 'Symbol': symbol,
-                'Quantity': -quantity,
+                'Quantity': quantity,
                 'Price': price,
                 'Total': total_revenue
             }])
@@ -62,23 +62,35 @@ class Account:
             return False
 
     def update_daily_portfolio_value(self):
-        total_stock_values = sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])
+        total_stock_values = 0
+        total_buying_costs = 0
 
-        total_transactions = self.transaction_history['Total'].sum()
+        for symbol in self.portfolio.keys():
+            symbol_transactions = self.transaction_history[self.transaction_history['Symbol'] == symbol]
 
-        total_value = round(self.balance + total_stock_values - total_transactions, 2)
+            total_quantity = symbol_transactions['Quantity'].sum()
+            total_cost = symbol_transactions['Total'].sum()
+
+            stock_value = total_quantity * self.get_stock_price(symbol)
+
+            if total_cost > 0:
+                total_buying_costs += total_cost
+
+            total_stock_values += stock_value
+
+        total_value = round(self.balance + total_stock_values - total_buying_costs, 2)
 
         today_date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
         new_value = pd.DataFrame({'Date': [today_date], 'Value': [total_value]})
-        
+
         print("New Daily Portfolio Value:")
         print(new_value)
-        
+
         if self.daily_portfolio_value.empty:
             self.daily_portfolio_value = new_value
         else:
             self.daily_portfolio_value = pd.concat([self.daily_portfolio_value, new_value], ignore_index=True)
-        
+
         print("Updated Daily Portfolio Values:")
         print(self.daily_portfolio_value)
 
