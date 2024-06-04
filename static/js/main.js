@@ -125,10 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updatePortfolioTable(portfolio) {
-        const portfolioTable = document.getElementById('portfolioTable');
-        portfolioTable.innerHTML = '';
+        const tbody = document.querySelector('#portfolioTable tbody');
+        tbody.innerHTML = '';
         for (const [symbol, quantity] of Object.entries(portfolio)) {
-            const row = portfolioTable.insertRow();
+            const row = tbody.insertRow();
             const cell1 = row.insertCell(0);
             const cell2 = row.insertCell(1);
             cell1.innerText = symbol;
