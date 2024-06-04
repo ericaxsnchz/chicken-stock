@@ -18,6 +18,18 @@ def get_stock_price(symbol, period='1mo', interval='1d'):
         print(f"Error retrieving data for {symbol}: {e}")
         return pd.DataFrame()
 
+def get_current_stock_price(symbol):
+    ticker = yf.Ticker(symbol)
+    try:
+        df = ticker.history(period='1d', interval='1d')
+        if not df.empty:
+            return df['Close'].iloc[-1]
+        else:
+            raise ValueError("No data found for the symbol")
+    except Exception as e:
+        print(f"Error retrieving current price for {symbol}: {e}")
+        return None
+
 @app.route('/')
 def home():
     initial_symbol = 'AAPL'
@@ -33,12 +45,14 @@ def load_data():
         return jsonify({"error": "No symbol provided"}), 400
 
     stock_data = get_stock_price(symbol)
-    if stock_data.empty:
+    current_price = get_current_stock_price(symbol)
+    if stock_data.empty or current_price is None:
         return jsonify({"error": "Unable to fetch data for the symbol"}), 500
 
     return jsonify({
         "index": stock_data.index.strftime('%Y-%m-%d').tolist(),
-        "data": stock_data.values.tolist()
+        "data": stock_data.values.tolist(),
+        "current_price": current_price
     })
 
 @app.route('/buy', methods=['POST'])
@@ -47,9 +61,10 @@ def buy():
     symbol = data['symbol']
     quantity = data['quantity']
     price = account.get_stock_price(symbol)
+    total_cost = quantity * price
     success = account.buy_stock(symbol, quantity, price)
     if success:
-        return jsonify(balance=account.balance, portfolio=account.portfolio)
+        return jsonify(balance=account.balance, portfolio=account.portfolio, total_cost=total_cost)
     else:
         return jsonify(error="Insufficient funds"), 400
 
@@ -59,9 +74,10 @@ def sell():
     symbol = data['symbol']
     quantity = data['quantity']
     price = account.get_stock_price(symbol)
+    total_revenue = quantity * price
     success = account.sell_stock(symbol, quantity, price)
     if success:
-        return jsonify(balance=account.balance, portfolio=account.portfolio)
+        return jsonify(balance=account.balance, portfolio=account.portfolio, total_revenue=total_revenue)
     else:
         return jsonify(error="Not enough stock"), 400
 

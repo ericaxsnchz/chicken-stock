@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             const dates = data.index;
             const closes = data.data.map(row => row[3]);
+            const price = data.current_price;
             const trace = {
                 x: dates,
                 y: closes,
@@ -20,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: `${symbol} Historical Prices`
             };
             Plotly.newPlot('chart', [trace], layout);
+
+            document.getElementById('stock-price').value = `$${price.toFixed(2)}`;
         })
         .catch(error => console.error('Error:', error));
     }
@@ -140,6 +143,5 @@ document.addEventListener('DOMContentLoaded', () => {
         const symbol = document.querySelector('input[name="symbol"]').value;
         loadData(symbol);
     });
-
     fetchPortfolioValue();
 });

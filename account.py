@@ -83,16 +83,10 @@ class Account:
         today_date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
         new_value = pd.DataFrame({'Date': [today_date], 'Value': [total_value]})
 
-        print("New Daily Portfolio Value:")
-        print(new_value)
-
         if self.daily_portfolio_value.empty:
             self.daily_portfolio_value = new_value
         else:
             self.daily_portfolio_value = pd.concat([self.daily_portfolio_value, new_value], ignore_index=True)
-
-        print("Updated Daily Portfolio Values:")
-        print(self.daily_portfolio_value)
 
     def get_daily_portfolio_value(self):
         data = self.daily_portfolio_value.copy()
@@ -109,7 +103,6 @@ class Account:
         balance_value = self.balance
         stock_values = sum([self.get_stock_price(symbol) * qty for symbol, qty in self.portfolio.items()])
         total_value = round(balance_value + stock_values, 2)
-        print(f"Current Portfolio Value: {total_value} (Balance: {self.balance}, Stocks: {stock_values})")
         return total_value
 
     def get_stock_price(self, symbol):
@@ -121,5 +114,4 @@ class Account:
             else:
                 raise ValueError("No data found for the symbol")
         except Exception as e:
-            print(f"Error retrieving data for {symbol}: {e}")
             return 0

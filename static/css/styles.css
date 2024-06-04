@@ -38,6 +38,48 @@ header h1 {
     display: flex;
     flex-direction: column;
 }
+
+.search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    padding-right: 20px;
+
+}
+
+.search-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
+    color: #000000;
+    z-index: 1;
+}
+
+.search-button:hover {
+    color: #333;
+}
+
+#stock-price {
+    width: 20%;
+    border-radius: 8px;
+    border: none;
+}
+
 #chart {
     flex: 1;
 }

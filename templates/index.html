@@ -28,6 +28,7 @@
         });
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="https://kit.fontawesome.com/541629fd61.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -38,11 +39,14 @@
     </header>
     <div class="container">
         <div class="chart-area">
-            <div>
+            <div class="search">
                 <form id="load-data-form">
-                    <input type="text" name="symbol" placeholder="Stock Symbol" required>
-                    <button type="submit">Load</button>
+                    <input type="text" id="stock-search" name="symbol" placeholder="Stock Symbol" required>
+                    <button class="search-button" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button> 
                 </form>
+            </div>
+            <div>
+                <input type="text" id="stock-price" placeholder="Current Price" readonly>
             </div>
             <div id="chart"></div>
         </div>
