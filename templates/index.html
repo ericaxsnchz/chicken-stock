@@ -6,25 +6,26 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const initialData = JSON.parse('{{ initial_data|safe }}');
-            const initialSymbol = '{{ initial_symbol }}';
-
-            const dates = initialData.index;
-            const closes = initialData.data.map(row => row[3]);
-
-            const trace = {
-                x: dates,
-                y: closes ,
-                type: 'scatter'
-            };
-            const layout = {
-                title: `${initialSymbol} Historical Prices`
-            };
-            Plotly.newPlot('chart', [trace], layout);
-
-            const balanceElement = document.getElementById('balance');
-            const rawBalance = parseFloat(balanceElement.textContent);
-            balanceElement.textContent = rawBalance.toFixed(2);
+            const initialDataElement = document.getElementById('initial-data');
+            const initialData = JSON.parse(initialDataElement.textContent);
+            const initialSymbol = initialDataElement.getAttribute('data-symbol');
+            const initialPrice = parseFloat(initialDataElement.getAttribute('data-price'));
+            
+            if (initialData && initialData.length > 0) {
+                const dates = initialData.map(row => row[0]);
+                const closes = initialData.map(row => row[1]);
+                const trace = {
+                    x: dates,
+                    y: closes,
+                    type: 'scatter'
+                };
+                const layout = {
+                    title: `${initialSymbol} Historical Prices`
+                };
+                Plotly.newPlot('chart', [trace], layout);
+            }
+    
+            document.getElementById('stock-price').value = `$${initialPrice.toFixed(2)}`;
         });
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
@@ -93,7 +94,10 @@
                 <button type="submit" class="sell-btn"><i class="fa-solid fa-money-bill-1-wave"></i></button>
             </form>
         </div>
-
     </div>
+    <div id="initial-data" style="display:none;"
+        data-symbol="{{ initial_symbol }}"
+        data-price="{{ initial_price }}"
+    >{{ initial_data | tojson }}</div>
 </body>
 </html>

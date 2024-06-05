@@ -1,4 +1,3 @@
-import pandas as pd
 import yfinance as yf
 from datetime import datetime, timezone
 
@@ -6,8 +5,8 @@ class Account:
     def __init__(self, initial_balance=10000):
         self.balance = initial_balance
         self.portfolio = {}
-        self.transaction_history = pd.DataFrame(columns=['Date', 'Symbol', 'Quantity', 'Price', 'Total'])
-        self.daily_portfolio_value = pd.DataFrame(columns=['Date', 'Value'])
+        self.transaction_history = []
+        self.daily_portfolio_value = []
 
     def get_stock_data(self, symbol):
         ticker = yf.Ticker(symbol)
@@ -23,16 +22,15 @@ class Account:
             else:
                 self.portfolio[symbol] = quantity
 
-            new_transaction = pd.DataFrame([{
+            new_transaction = {
                 'Date': datetime.now(timezone.utc),
                 'Symbol': symbol,
                 'Quantity': quantity,
                 'Price': price,
                 'Total': total_cost
-            }])
+            }
             
-            if not new_transaction.empty:
-                self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
+            self.transaction_history.append(new_transaction)
             self.update_daily_portfolio_value() 
             return True
         else:
@@ -46,16 +44,15 @@ class Account:
             if self.portfolio[symbol] == 0:
                 del self.portfolio[symbol]
 
-            new_transaction = pd.DataFrame([{
+            new_transaction = {
                 'Date': datetime.now(timezone.utc),
                 'Symbol': symbol,
                 'Quantity': quantity,
                 'Price': price,
                 'Total': total_revenue
-            }])
+            }
             
-            if not new_transaction.empty:
-                self.transaction_history = pd.concat([self.transaction_history, new_transaction], ignore_index=True)
+            self.transaction_history.append(new_transaction)
             self.update_daily_portfolio_value()
             return True
         else:
@@ -66,10 +63,10 @@ class Account:
         total_buying_costs = 0
 
         for symbol in self.portfolio.keys():
-            symbol_transactions = self.transaction_history[self.transaction_history['Symbol'] == symbol]
+            symbol_transactions = [t for t in self.transaction_history if t['Symbol'] == symbol]
 
-            total_quantity = symbol_transactions['Quantity'].sum()
-            total_cost = symbol_transactions['Total'].sum()
+            total_quantity = sum(t['Quantity'] for t in symbol_transactions)
+            total_cost = sum(t['Total'] for t in symbol_transactions)
 
             stock_value = total_quantity * self.get_stock_price(symbol)
 
@@ -81,22 +78,14 @@ class Account:
         total_value = round(self.balance + total_stock_values - total_buying_costs, 2)
 
         today_date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        new_value = pd.DataFrame({'Date': [today_date], 'Value': [total_value]})
+        new_value = {'Date': today_date, 'Value': total_value}
 
-        if self.daily_portfolio_value.empty:
-            self.daily_portfolio_value = new_value
-        else:
-            self.daily_portfolio_value = pd.concat([self.daily_portfolio_value, new_value], ignore_index=True)
+        self.daily_portfolio_value.append(new_value)
 
     def get_daily_portfolio_value(self):
-        data = self.daily_portfolio_value.copy()
-        data['Date'] = pd.to_datetime(data['Date'])
-        data = data.set_index('Date')
-        data['Value'] = data['Value'].apply(lambda x: '${:,.2f}'.format(x))
-        
         return {
-            'index': data.index.strftime('%Y-%m-%d').tolist(),
-            'data': data['Value'].tolist()
+            'index': [v['Date'] for v in self.daily_portfolio_value],
+            'data': ['${:,.2f}'.format(v['Value']) for v in self.daily_portfolio_value]
         }
 
     def get_portfolio_value(self):

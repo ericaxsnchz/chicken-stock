@@ -1,6 +1,5 @@
 from flask import Flask, render_template, jsonify, request
 import yfinance as yf
-import pandas as pd
 from account import Account
 
 app = Flask(__name__)
@@ -11,12 +10,12 @@ def get_stock_price(symbol, period='1mo', interval='1d'):
     try:
         df = ticker.history(period=period, interval=interval)
         if not df.empty:
-            return df
+            return [(date.strftime('%Y-%m-%d'), close) for date, close in zip(df.index, df['Close'])]
         else:
             raise ValueError("No data found for the symbol")
     except Exception as e:
         print(f"Error retrieving data for {symbol}: {e}")
-        return pd.DataFrame()
+        return None
 
 def get_current_stock_price(symbol):
     ticker = yf.Ticker(symbol)
@@ -34,33 +33,34 @@ def get_current_stock_price(symbol):
 def home():
     initial_symbol = 'AAPL'
     initial_data = get_stock_price(initial_symbol)
-    return render_template('index.html', balance=account.balance, portfolio=account.portfolio, initial_data=initial_data.to_json(orient='split'), initial_symbol=initial_symbol)
+    initial_price = get_current_stock_price(initial_symbol)
+    return render_template('index.html', balance=account.balance, portfolio=account.portfolio, initial_data=initial_data, initial_symbol=initial_symbol, initial_price=initial_price)
 
 @app.route('/load_data', methods=['POST'])
 def load_data():
     data = request.get_json()
     symbol = data.get('symbol')
-    
+
     if symbol is None:
         return jsonify({"error": "No symbol provided"}), 400
 
     stock_data = get_stock_price(symbol)
     current_price = get_current_stock_price(symbol)
-    if stock_data.empty or current_price is None:
+    if stock_data is not None and current_price is not None:
+        return jsonify({
+            "index": [row[0] for row in stock_data],
+            "data": [{"x": row[0], "y": row[1]} for row in stock_data],
+            "current_price": current_price
+        })
+    else:
         return jsonify({"error": "Unable to fetch data for the symbol"}), 500
-
-    return jsonify({
-        "index": stock_data.index.strftime('%Y-%m-%d').tolist(),
-        "data": stock_data.values.tolist(),
-        "current_price": current_price
-    })
 
 @app.route('/buy', methods=['POST'])
 def buy():
     data = request.json
     symbol = data['symbol']
     quantity = data['quantity']
-    price = account.get_stock_price(symbol)
+    price = get_current_stock_price(symbol)
     total_cost = quantity * price
     success = account.buy_stock(symbol, quantity, price)
     if success:
@@ -73,7 +73,7 @@ def sell():
     data = request.json
     symbol = data['symbol']
     quantity = data['quantity']
-    price = account.get_stock_price(symbol)
+    price = get_current_stock_price(symbol)
     total_revenue = quantity * price
     success = account.sell_stock(symbol, quantity, price)
     if success:

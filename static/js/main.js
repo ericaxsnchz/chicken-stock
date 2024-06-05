@@ -9,8 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
+            if (!data || !data.index || !data.data) {
+                console.error('Error: Invalid data received');
+                return;
+            }
+    
             const dates = data.index;
-            const closes = data.data.map(row => row[3]);
+            const closes = data.data.map(row => row.y);  // Extracting closing prices from data
             const price = data.current_price;
             const trace = {
                 x: dates,
@@ -21,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: `${symbol} Historical Prices`
             };
             Plotly.newPlot('chart', [trace], layout);
-
+    
             document.getElementById('stock-price').value = `$${price.toFixed(2)}`;
         })
         .catch(error => console.error('Error:', error));
@@ -121,7 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateBalance(balance) {
-        document.getElementById('balance').innerText = `$${balance.toFixed(2)}`;
+        const balanceElement = document.getElementById('balance');
+        const rawBalance = parseFloat(balance);
+        balanceElement.innerText = `$${rawBalance.toFixed(2)}`;
     }
     
     function updatePortfolioTable(portfolio) {
