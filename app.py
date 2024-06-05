@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import yfinance as yf
 from account import Account
+import os
 
 app = Flask(__name__)
 account = Account()
@@ -95,4 +96,5 @@ def portfolio_value():
     return jsonify(portfolio_data=portfolio_data)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
